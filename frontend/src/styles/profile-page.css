@@ -1,0 +1,28 @@
+@import "./tokens.css";
+
+.profile-page {
+  padding: var(--space-6) var(--space-5) var(--space-9);
+}
+
+.profile-page-inner {
+  max-width: var(--content-max);
+  margin: 0 auto;
+}
+
+.profile-title {
+  font-size: var(--step-4);
+  font-weight: 500;
+  margin-top: var(--space-6);
+}
+
+.profile-intro {
+  color: var(--text-on-paper-muted);
+  margin-top: var(--space-3);
+  max-width: 56ch;
+}
+
+.form-actions-note {
+  color: var(--text-on-paper-muted);
+  font-size: var(--step-000);
+  font-family: var(--font-mono);
+}

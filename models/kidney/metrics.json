@@ -1,0 +1,132 @@
+{
+  "disease_key": "kidney",
+  "display_name": "Kidney disease",
+  "n_samples": 158,
+  "n_features": 24,
+  "feature_names": [
+    "age",
+    "blood_pressure",
+    "specific_gravity",
+    "albumin",
+    "sugar",
+    "red_blood_cells",
+    "pus_cell",
+    "pus_cell_clumps",
+    "bacteria",
+    "blood_glucose_random",
+    "blood_urea",
+    "serum_creatinine",
+    "sodium",
+    "potassium",
+    "hemoglobin",
+    "packed_cell_volume",
+    "white_blood_cell_count",
+    "red_blood_cell_count",
+    "hypertension",
+    "diabetes_mellitus",
+    "coronary_artery_disease",
+    "appetite",
+    "pedal_edema",
+    "anemia"
+  ],
+  "class_names": [
+    "No kidney disease",
+    "Kidney disease"
+  ],
+  "positive_rate": 0.2721518987341772,
+  "train_test_split": {
+    "train": 118,
+    "test": 40
+  },
+  "classical_models": {
+    "logistic_regression": {
+      "model_name": "logistic_regression",
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "roc_auc": 1.0,
+      "confusion_matrix": [
+        [
+          29,
+          0
+        ],
+        [
+          0,
+          11
+        ]
+      ],
+      "training_time_sec": 0.0015,
+      "inference_time_sec": 3e-06,
+      "n_features": 24
+    },
+    "svm": {
+      "model_name": "svm",
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "roc_auc": 1.0,
+      "confusion_matrix": [
+        [
+          29,
+          0
+        ],
+        [
+          0,
+          11
+        ]
+      ],
+      "training_time_sec": 0.0019,
+      "inference_time_sec": 6e-06,
+      "n_features": 24
+    },
+    "random_forest": {
+      "model_name": "random_forest",
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "roc_auc": 1.0,
+      "confusion_matrix": [
+        [
+          29,
+          0
+        ],
+        [
+          0,
+          11
+        ]
+      ],
+      "training_time_sec": 0.1606,
+      "inference_time_sec": 0.000242,
+      "n_features": 24
+    }
+  },
+  "quantum_model": null,
+  "initial_screening_model": {
+    "model_name": "initial_screening_logistic_regression",
+    "accuracy": 0.775,
+    "precision": 0.6667,
+    "recall": 0.3636,
+    "f1": 0.4706,
+    "roc_auc": 0.6991,
+    "confusion_matrix": [
+      [
+        27,
+        2
+      ],
+      [
+        7,
+        4
+      ]
+    ],
+    "training_time_sec": 0.0016,
+    "inference_time_sec": 4e-06,
+    "n_features": 2,
+    "features_used": [
+      "age",
+      "blood_pressure"
+    ]
+  }
+}

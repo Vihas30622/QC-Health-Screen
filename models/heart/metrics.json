@@ -1,0 +1,122 @@
+{
+  "disease_key": "heart",
+  "display_name": "Cardiovascular disease",
+  "n_samples": 303,
+  "n_features": 13,
+  "feature_names": [
+    "age",
+    "sex",
+    "cp",
+    "trestbps",
+    "chol",
+    "fbs",
+    "restecg",
+    "thalach",
+    "exang",
+    "oldpeak",
+    "slope",
+    "ca",
+    "thal"
+  ],
+  "class_names": [
+    "No heart disease",
+    "Heart disease"
+  ],
+  "positive_rate": 0.5445544554455446,
+  "train_test_split": {
+    "train": 227,
+    "test": 76
+  },
+  "classical_models": {
+    "logistic_regression": {
+      "model_name": "logistic_regression",
+      "accuracy": 0.7632,
+      "precision": 0.7447,
+      "recall": 0.8537,
+      "f1": 0.7955,
+      "roc_auc": 0.8474,
+      "confusion_matrix": [
+        [
+          23,
+          12
+        ],
+        [
+          6,
+          35
+        ]
+      ],
+      "training_time_sec": 0.0018,
+      "inference_time_sec": 2e-06,
+      "n_features": 13
+    },
+    "svm": {
+      "model_name": "svm",
+      "accuracy": 0.7632,
+      "precision": 0.7447,
+      "recall": 0.8537,
+      "f1": 0.7955,
+      "roc_auc": 0.846,
+      "confusion_matrix": [
+        [
+          23,
+          12
+        ],
+        [
+          6,
+          35
+        ]
+      ],
+      "training_time_sec": 0.0064,
+      "inference_time_sec": 8e-06,
+      "n_features": 13
+    },
+    "random_forest": {
+      "model_name": "random_forest",
+      "accuracy": 0.7763,
+      "precision": 0.74,
+      "recall": 0.9024,
+      "f1": 0.8132,
+      "roc_auc": 0.8801,
+      "confusion_matrix": [
+        [
+          22,
+          13
+        ],
+        [
+          4,
+          37
+        ]
+      ],
+      "training_time_sec": 0.2176,
+      "inference_time_sec": 0.000168,
+      "n_features": 13
+    }
+  },
+  "quantum_model": null,
+  "initial_screening_model": {
+    "model_name": "initial_screening_logistic_regression",
+    "accuracy": 0.6974,
+    "precision": 0.725,
+    "recall": 0.7073,
+    "f1": 0.716,
+    "roc_auc": 0.762,
+    "confusion_matrix": [
+      [
+        24,
+        11
+      ],
+      [
+        12,
+        29
+      ]
+    ],
+    "training_time_sec": 0.0014,
+    "inference_time_sec": 2e-06,
+    "n_features": 3,
+    "features_used": [
+      "age",
+      "sex",
+      "trestbps"
+    ]
+  }
+}

@@ -1,0 +1,62 @@
+@import "./tokens.css";
+
+.progress-steps {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: var(--space-5);
+  border-bottom: 1px solid var(--paper-line);
+  padding-bottom: var(--space-4);
+}
+
+.progress-step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--step-000);
+  color: #9a9e97;
+}
+
+.progress-step-marker {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--paper-line);
+  font-size: 12px;
+}
+
+.progress-step--active {
+  color: var(--text-on-paper);
+}
+
+.progress-step--active .progress-step-marker {
+  border-color: var(--signal-teal-strong);
+  color: var(--signal-teal-strong);
+}
+
+.progress-step--done .progress-step-marker {
+  background: var(--signal-teal-strong);
+  border-color: var(--signal-teal-strong);
+  color: white;
+}
+
+.progress-step--done {
+  color: var(--text-on-paper-muted);
+}
+
+@media (max-width: 640px) {
+  .progress-steps {
+    gap: var(--space-3);
+  }
+  .progress-step-label {
+    display: none;
+  }
+  .progress-step--active .progress-step-label {
+    display: inline;
+  }
+}

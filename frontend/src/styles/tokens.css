@@ -1,0 +1,52 @@
+:root {
+  /* --- Color: instrument-panel dark + clinical paper light --- */
+  --ink-950: #0f1417;
+  --ink-900: #161d21;
+  --ink-800: #1f282d;
+  --ink-line-on-dark: #2b3439;
+
+  --paper-0: #fafaf8;
+  --paper-50: #f2f1ec;
+  --paper-line: #e2e0d8;
+  --text-on-paper: #16191a;
+  --text-on-paper-muted: #565b5c;
+
+  --signal-teal: #4fd1c5;
+  --signal-teal-strong: #1f9d90;
+
+  --risk-high: #c4432e;
+  --risk-high-bg: #fbeae6;
+  --risk-moderate: #b8791f;
+  --risk-moderate-bg: #faf1e0;
+  --risk-low: #3f8f63;
+  --risk-low-bg: #e9f4ee;
+
+  /* --- Type --- */
+  --font-display: "Space Grotesk", "Arial Narrow", sans-serif;
+  --font-body: "IBM Plex Sans", -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", "SFMono-Regular", monospace;
+
+  --step-000: 0.8rem;
+  --step-0: 1rem;
+  --step-1: 1.25rem;
+  --step-2: 1.6rem;
+  --step-3: 2.1rem;
+  --step-4: 2.9rem;
+  --step-5: 3.9rem;
+
+  /* --- Spacing --- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+
+  --radius-sm: 3px;
+  --radius-md: 6px;
+
+  --content-max: 960px;
+}

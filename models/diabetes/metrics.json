@@ -1,0 +1,117 @@
+{
+  "disease_key": "diabetes",
+  "display_name": "Diabetes",
+  "n_samples": 768,
+  "n_features": 8,
+  "feature_names": [
+    "pregnancies",
+    "glucose",
+    "blood_pressure",
+    "skin_thickness",
+    "insulin",
+    "bmi",
+    "diabetes_pedigree",
+    "age"
+  ],
+  "class_names": [
+    "No diabetes",
+    "Diabetes"
+  ],
+  "positive_rate": 0.3489583333333333,
+  "train_test_split": {
+    "train": 576,
+    "test": 192
+  },
+  "classical_models": {
+    "logistic_regression": {
+      "model_name": "logistic_regression",
+      "accuracy": 0.724,
+      "precision": 0.6296,
+      "recall": 0.5075,
+      "f1": 0.562,
+      "roc_auc": 0.8239,
+      "confusion_matrix": [
+        [
+          105,
+          20
+        ],
+        [
+          33,
+          34
+        ]
+      ],
+      "training_time_sec": 0.0022,
+      "inference_time_sec": 1e-06,
+      "n_features": 8
+    },
+    "svm": {
+      "model_name": "svm",
+      "accuracy": 0.7396,
+      "precision": 0.6545,
+      "recall": 0.5373,
+      "f1": 0.5902,
+      "roc_auc": 0.7945,
+      "confusion_matrix": [
+        [
+          106,
+          19
+        ],
+        [
+          31,
+          36
+        ]
+      ],
+      "training_time_sec": 0.0258,
+      "inference_time_sec": 1e-05,
+      "n_features": 8
+    },
+    "random_forest": {
+      "model_name": "random_forest",
+      "accuracy": 0.7448,
+      "precision": 0.6607,
+      "recall": 0.5522,
+      "f1": 0.6016,
+      "roc_auc": 0.8123,
+      "confusion_matrix": [
+        [
+          106,
+          19
+        ],
+        [
+          30,
+          37
+        ]
+      ],
+      "training_time_sec": 0.2198,
+      "inference_time_sec": 6.1e-05,
+      "n_features": 8
+    }
+  },
+  "quantum_model": null,
+  "initial_screening_model": {
+    "model_name": "initial_screening_logistic_regression",
+    "accuracy": 0.651,
+    "precision": 0.5,
+    "recall": 0.3134,
+    "f1": 0.3853,
+    "roc_auc": 0.7262,
+    "confusion_matrix": [
+      [
+        104,
+        21
+      ],
+      [
+        46,
+        21
+      ]
+    ],
+    "training_time_sec": 0.0021,
+    "inference_time_sec": 1e-06,
+    "n_features": 3,
+    "features_used": [
+      "bmi",
+      "blood_pressure",
+      "age"
+    ]
+  }
+}
