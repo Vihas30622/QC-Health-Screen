@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import jsQR from "jsqr";
 import ProgressSteps from "../components/ProgressSteps";
 import {
   NumberField,
@@ -103,6 +104,22 @@ function bmiCategory(bmi) {
   return "obese range";
 }
 
+function decodeQrImage(source, canvas, maxDimension) {
+  const width = source.videoWidth || source.naturalWidth;
+  const height = source.videoHeight || source.naturalHeight;
+  if (!width || !height) return null;
+  const scale = Math.min(1, maxDimension / Math.max(width, height));
+  canvas.width = Math.round(width * scale);
+  canvas.height = Math.round(height * scale);
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context) throw new Error("Image decoding is unavailable in this browser.");
+  context.drawImage(source, 0, 0, canvas.width, canvas.height);
+  const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+  return jsQR(imageData.data, imageData.width, imageData.height, {
+    inversionAttempts: "attemptBoth",
+  });
+}
+
 function validate(form, unitSystem = "metric") {
   const errors = {};
 
@@ -174,6 +191,9 @@ export default function BasicProfile({ onBackToHome, onSubmitted }) {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const scanFrameRef = useRef(null);
+  const imageInputRef = useRef(null);
+  const captureInputRef = useRef(null);
+  const scannerAttemptRef = useRef(0);
 
   const bmi = useMemo(
     () => computeBmi(form.height_cm, form.weight_kg),
@@ -188,7 +208,11 @@ export default function BasicProfile({ onBackToHome, onSubmitted }) {
   };
 
   const stopScanner = () => {
-    if (scanFrameRef.current) cancelAnimationFrame(scanFrameRef.current);
+    scannerAttemptRef.current += 1;
+    if (scanFrameRef.current != null) {
+      window.clearTimeout(scanFrameRef.current);
+      scanFrameRef.current = null;
+    }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
@@ -213,33 +237,108 @@ export default function BasicProfile({ onBackToHome, onSubmitted }) {
   };
 
   const startScanner = async () => {
-    setScanOpen(true);
+    if (scanOpen || streamRef.current) return;
+    const attempt = scannerAttemptRef.current + 1;
+    scannerAttemptRef.current = attempt;
     setScanError(null);
-    setScanStatus(null);
-    if (!("BarcodeDetector" in window)) {
-      setScanError("Camera scanning is not supported in this browser. Paste the QR data below instead.");
+    setScanStatus("Starting camera…");
+    if (window.isSecureContext === false) {
+      setScanError("Camera access requires a secure connection (HTTPS) or localhost. You can upload a QR image instead.");
+      setScanStatus(null);
       return;
     }
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setScanError("Camera access is not available in this browser. Upload a QR image or paste the QR data instead.");
+      setScanStatus(null);
+      return;
+    }
+    setScanOpen(true);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: "environment" } },
+      });
+      if (scannerAttemptRef.current !== attempt) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
       streamRef.current = stream;
-      videoRef.current.srcObject = stream;
-      await videoRef.current.play();
-      const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
-      const scanFrame = async () => {
-        if (!videoRef.current || !streamRef.current) return;
-        const codes = await detector.detect(videoRef.current);
-        if (codes.length > 0 && codes[0].rawValue) {
+      const video = videoRef.current;
+      if (!video) throw new Error("Camera preview is unavailable.");
+      video.srcObject = stream;
+      await video.play();
+      if (scannerAttemptRef.current !== attempt) return;
+      setScanStatus("Point the camera at the QR code.");
+      const canvas = document.createElement("canvas");
+      const scanFrame = () => {
+        if (!videoRef.current || streamRef.current !== stream) return;
+        try {
+          const code = decodeQrImage(video, canvas, 1600);
+          if (code?.data) {
+            stopScanner();
+            requestReportImport(code.data);
+            return;
+          }
+        } catch (err) {
           stopScanner();
-          await requestReportImport(codes[0].rawValue);
+          setScanError(err instanceof Error ? err.message : "Could not read the camera image.");
+          setScanStatus(null);
           return;
         }
-        scanFrameRef.current = requestAnimationFrame(scanFrame);
+        scanFrameRef.current = window.setTimeout(scanFrame, 120);
       };
-      scanFrameRef.current = requestAnimationFrame(scanFrame);
-    } catch {
+      scanFrameRef.current = window.setTimeout(scanFrame, 120);
+    } catch (err) {
       stopScanner();
-      setScanError("Camera access was unavailable. Paste the QR data below instead.");
+      if (err?.name === "NotAllowedError" || err?.name === "SecurityError") {
+        setScanError("Camera permission was denied. Allow camera access in your browser settings, or upload a QR image instead.");
+      } else if (err?.name === "NotFoundError" || err?.name === "OverconstrainedError") {
+        setScanError("No usable camera was found. Upload a QR image or paste the QR data instead.");
+      } else if (err?.name === "NotReadableError") {
+        setScanError("The camera is already in use by another app. Close it or upload a QR image instead.");
+      } else {
+        setScanError(err instanceof Error ? err.message : "Camera access was unavailable. Upload a QR image or paste the QR data instead.");
+      }
+      setScanStatus(null);
+    }
+  };
+
+  const handleImageSelected = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (file.type && !file.type.startsWith("image/")) {
+      setScanError("Choose an image file containing a QR code.");
+      setScanStatus(null);
+      return;
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      setScanError("Choose an image smaller than 15 MB.");
+      setScanStatus(null);
+      return;
+    }
+
+    stopScanner();
+    setScanError(null);
+    setScanStatus("Reading the image on this device…");
+    const imageUrl = URL.createObjectURL(file);
+    try {
+      const image = new Image();
+      await new Promise((resolve, reject) => {
+        image.onload = resolve;
+        image.onerror = () => reject(new Error("Could not open this image."));
+        image.src = imageUrl;
+      });
+      const canvas = document.createElement("canvas");
+      const code = decodeQrImage(image, canvas, 2048);
+      if (!code?.data) {
+        throw new Error("No QR code was found in that image. Try a clearer, well-lit photo.");
+      }
+      await requestReportImport(code.data);
+    } catch (err) {
+      setScanError(err instanceof Error ? err.message : "Could not read a QR code from this image.");
+      setScanStatus(null);
+    } finally {
+      URL.revokeObjectURL(imageUrl);
     }
   };
 
@@ -318,42 +417,79 @@ export default function BasicProfile({ onBackToHome, onSubmitted }) {
               then add the confirmed values to this screening.
             </p>
           </div>
-          <button type="button" className="btn-secondary" onClick={startScanner}>
-            Scan report QR code
-          </button>
+          <div className="report-import-actions">
+            <button type="button" className="btn-primary" onClick={startScanner} disabled={scanOpen}>
+              Use camera
+            </button>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => imageInputRef.current?.click()}
+            >
+              Choose image / Drive file
+            </button>
+            <button
+              type="button"
+              className="btn-secondary report-capture-button"
+              onClick={() => captureInputRef.current?.click()}
+            >
+              Take a photo
+            </button>
+            <input
+              ref={imageInputRef}
+              className="report-image-input"
+              type="file"
+              accept="image/*"
+              aria-label="Choose an image containing a QR code"
+              onChange={handleImageSelected}
+            />
+            <input
+              ref={captureInputRef}
+              className="report-image-input"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              aria-label="Take a photo of a QR code"
+              onChange={handleImageSelected}
+            />
+          </div>
+          <p className="field-hint">
+            Choose an image from your device or an available cloud-drive location, or take a new photo on mobile. Images are decoded on your device.
+          </p>
 
           {scanOpen && (
             <div className="report-scanner">
               <video ref={videoRef} className="report-scanner-video" muted playsInline />
-              <button type="button" className="btn-secondary" onClick={stopScanner}>
+              <button type="button" className="btn-secondary" onClick={() => {
+                stopScanner();
+                setScanStatus(null);
+              }}>
                 Stop camera
               </button>
             </div>
           )}
 
-          {(scanOpen || scanError) && (
-            <div className="report-paste">
-              <label className="field-label" htmlFor="qr-payload">Or paste QR data</label>
-              <textarea
-                id="qr-payload"
-                className="report-paste-input"
-                value={scanText}
-                onChange={(event) => setScanText(event.target.value)}
-                placeholder='{"age": 52, "biological_sex": "female", "glucose": 110}'
-                rows={3}
-              />
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={() => requestReportImport(scanText)}
-                disabled={!scanText.trim()}
-              >
-                Check pasted data
-              </button>
-            </div>
-          )}
+          <div className="report-paste">
+            <label className="field-label" htmlFor="qr-payload">Or paste QR data</label>
+            <textarea
+              id="qr-payload"
+              className="report-paste-input"
+              value={scanText}
+              onChange={(event) => setScanText(event.target.value)}
+              placeholder='{"age": 52, "biological_sex": "female", "glucose": 110}'
+              rows={3}
+            />
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => requestReportImport(scanText)}
+              disabled={!scanText.trim()}
+            >
+              Check pasted data
+            </button>
+          </div>
 
-          {scanStatus && <p className="field-hint">{scanStatus}</p>}
+          {scanStatus && <p className="field-hint" role="status" aria-live="polite">{scanStatus}</p>}
           {scanError && <p className="field-error" role="alert">{scanError}</p>}
 
           {pendingImport && (
