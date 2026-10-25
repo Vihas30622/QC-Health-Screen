@@ -55,8 +55,8 @@ python -m uvicorn backend.main:app --reload --port 8000
 Backend URLs:
 
 - App API: http://localhost:8000
-- Interactive API documentation: http://localhost:8000/docs
-- Health check: http://localhost:8000/health
+- Interactive API documentation: http://localhost:8000/api/docs
+- Health check: http://localhost:8000/api/health
 
 ### 2. Install and run the frontend
 
@@ -162,17 +162,17 @@ can still produce an `insufficient_information` result.
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
-| GET | `/health` | Check that the API is running |
-| GET | `/diseases` | List supported diseases |
-| POST | `/screening/basic` | Validate and create a screening session |
-| POST | `/screening/import-report` | Validate QR report JSON without storing raw data |
-| POST | `/screening/initial` | Run the initial multi-disease screen |
-| GET | `/screening/followup/{disease}` | Get follow-up questions |
-| POST | `/screening/followup` | Save follow-up answers |
-| POST | `/prediction/{disease}` | Run a disease-specific prediction |
-| GET | `/screening/report/{session_id}` | Get the combined report |
-| GET | `/models` | Get stored model metrics |
-| GET | `/circuit/{disease}` | Get the quantum circuit or an unavailable response |
+| GET | `/api/health` | Check that the API is running |
+| GET | `/api/diseases` | List supported diseases |
+| POST | `/api/screening/basic` | Validate and create a screening session |
+| POST | `/api/screening/import-report` | Validate QR report JSON without storing raw data |
+| POST | `/api/screening/initial` | Run the initial multi-disease screen |
+| GET | `/api/screening/followup/{disease}` | Get follow-up questions |
+| POST | `/api/screening/followup` | Save follow-up answers |
+| POST | `/api/prediction/{disease}` | Run a disease-specific prediction |
+| GET | `/api/screening/report/{session_id}` | Get the combined report |
+| GET | `/api/models` | Get stored model metrics |
+| GET | `/api/circuit/{disease}` | Get the quantum circuit or an unavailable response |
 
 ## Test and build
 
@@ -217,6 +217,29 @@ docker run -p 8000:8000 quantum-health-screening
 ```
 
 Open http://localhost:8000.
+
+## Vercel multi-service deployment
+
+The root `vercel.json` configures two services: `frontend` (Vite, public at
+`/`) and `backend` (FastAPI, public under `/api`). The backend service uses
+the repository root so its Python package can access `backend/`, the `ml/`
+library, and trained files under `models/`; its Vercel function explicitly
+includes the model artifacts. The `ml/` directory is a Python library and
+offline training pipeline, not an HTTP service, so it is not deployed as a
+separate service.
+
+The browser calls `/api/...` on the same Vercel domain and the top-level
+rewrite routes those requests to FastAPI. There are no service bindings:
+the frontend is a static browser app, not a server-side service calling the
+backend. For local development the frontend uses
+`VITE_API_BASE=http://localhost:8000`, while the Vercel frontend build sets
+it to an empty string to use same-origin requests.
+
+Run `vercel dev` from the repository root to develop the configured services
+together; its Python runtime requires Python 3.12 or newer. The root
+`.python-version` pins Vercel to Python 3.12 (the Vercel default). Vercel
+Services are in beta; ensure the linked Vercel project supports services and
+that the project root is the repository root.
 
 ## Project structure
 

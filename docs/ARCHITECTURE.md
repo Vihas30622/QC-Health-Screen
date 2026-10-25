@@ -75,7 +75,7 @@ reused unchanged at inference time.
 Logistic Regression, SVM (RBF kernel), and Random Forest
 (`ml/classical/models.py`), each evaluated with the same metric set
 (`ml/common/evaluation.py`). The best-performing model by test-set F1 is
-what `/prediction/{disease}` actually uses (`best_classical_model_name`
+what `/api/prediction/{disease}` actually uses (`best_classical_model_name`
 in `backend/services/model_loader.py`) — chosen mechanically from a
 number already computed at training time, not hand-picked.
 
@@ -106,7 +106,7 @@ qubit count.
 ZZ feature map (2 repetitions, linear entanglement) → RY/RZ rotation +
 CZ entangler ansatz (2 repetitions) → measurement. See
 `ml/quantum/circuit.py`; `circuit_text_diagram()` renders the actual
-circuit as ASCII art, exposed via `GET /circuit/{disease}` and shown in
+circuit as ASCII art, exposed via `GET /api/circuit/{disease}` and shown in
 the frontend's "How it works" page (falls back to an honest message
 when qiskit isn't installed, rather than a placeholder image). Circuit
 rendering was verified in the current environment.
@@ -132,14 +132,14 @@ same real predictions also drive `ml/common/charts.py`, which writes an
 actual confusion-matrix PNG and (where `predict_proba` exists) an ROC
 curve per model, plus one grouped-bar model-comparison chart per
 disease, to `models/<disease>/charts/`. These are served through
-`GET /models/{disease}/charts/{filename}`, which checks the filename
+`GET /api/models/{disease}/charts/{filename}`, which checks the filename
 against an explicit allowlist so it can never be used to fetch the raw
 `.joblib` model files (Section 16's "never expose internal model
 files").
 
 ## 14. Classical vs quantum comparison
 
-Exposed via `GET /models` (real, per-disease JSON with chart image
+Exposed via `GET /api/models` (real, per-disease JSON with chart image
 URLs) and the frontend's Model Comparison page, which renders the
 actual confusion-matrix/ROC-curve images inline per model plus the
 grouped-bar comparison chart. The checked-in metrics currently contain
@@ -159,7 +159,7 @@ environment.
 - Run VQC training end to end and address any runtime issues it surfaces.
 - Replace or supplement the heart-disease dataset — most of its
   features require ECG/stress-test/fluoroscopy results a self-screening
-  user won't have, so `/prediction/heart` will legitimately return
+  user won't have, so `/api/prediction/heart` will legitimately return
   "insufficient information" most of the time. The Framingham Heart
   Study dataset (~4,240 records, questionnaire/basic-lab features →
   10-year CHD risk) is a concrete, better-suited candidate — attempted

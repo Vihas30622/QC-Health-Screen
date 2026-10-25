@@ -36,17 +36,22 @@ DIABETES_FOLLOWUP = {
 
 
 def _new_session():
-    return client.post("/screening/basic", json=VALID_PROFILE).json()["session_id"]
+    return client.post("/api/screening/basic", json=VALID_PROFILE).json()["session_id"]
 
 
 def test_health_check():
-    resp = client.get("/health")
+    resp = client.get("/api/health")
     assert resp.status_code == 200
     assert resp.json()["status"] == "ok"
 
 
+def test_api_documentation_uses_public_api_prefix():
+    assert client.get("/api/docs").status_code == 200
+    assert client.get("/api/openapi.json").status_code == 200
+
+
 def test_list_diseases_all_trained_classical_only():
-    resp = client.get("/diseases")
+    resp = client.get("/api/diseases")
     assert resp.status_code == 200
     by_key = {d["key"]: d for d in resp.json()["diseases"]}
     assert {"diabetes", "heart", "kidney"}.issubset(by_key)
@@ -58,7 +63,7 @@ def test_list_diseases_all_trained_classical_only():
 
 
 def test_models_endpoint_returns_real_metrics_for_all_three():
-    resp = client.get("/models")
+    resp = client.get("/api/models")
     assert resp.status_code == 200
     body = resp.json()
     assert {"diabetes", "heart", "kidney"}.issubset(body.keys())
@@ -68,29 +73,29 @@ def test_models_endpoint_returns_real_metrics_for_all_three():
 
 
 def test_chart_image_served_for_valid_disease_and_filename():
-    resp = client.get("/models/diabetes/charts/model_comparison.png")
+    resp = client.get("/api/models/diabetes/charts/model_comparison.png")
     assert resp.status_code == 200
     assert resp.headers["content-type"] == "image/png"
 
 
 def test_chart_image_rejects_path_traversal():
-    resp = client.get("/models/diabetes/charts/..%2F..%2Fmain.py")
+    resp = client.get("/api/models/diabetes/charts/..%2F..%2Fmain.py")
     assert resp.status_code == 404
 
 
 def test_chart_image_rejects_non_allowlisted_filename():
     # joblib model files must never be servable through this endpoint
-    resp = client.get("/models/diabetes/charts/random_forest.joblib")
+    resp = client.get("/api/models/diabetes/charts/random_forest.joblib")
     assert resp.status_code == 404
 
 
 def test_chart_image_unknown_disease_404():
-    resp = client.get("/models/liver/charts/model_comparison.png")
+    resp = client.get("/api/models/liver/charts/model_comparison.png")
     assert resp.status_code == 404
 
 
 def test_submit_valid_basic_profile_computes_bmi():
-    resp = client.post("/screening/basic", json=VALID_PROFILE)
+    resp = client.post("/api/screening/basic", json=VALID_PROFILE)
     assert resp.status_code == 201
     body = resp.json()
     assert body["session_id"]
@@ -100,20 +105,20 @@ def test_submit_valid_basic_profile_computes_bmi():
 
 
 def test_sessions_are_isolated():
-    r1 = client.post("/screening/basic", json=VALID_PROFILE)
-    r2 = client.post("/screening/basic", json=VALID_PROFILE)
+    r1 = client.post("/api/screening/basic", json=VALID_PROFILE)
+    r2 = client.post("/api/screening/basic", json=VALID_PROFILE)
     assert r1.json()["session_id"] != r2.json()["session_id"]
 
 
 def test_retrieve_stored_profile_by_session():
-    created = client.post("/screening/basic", json=VALID_PROFILE).json()
-    fetched = client.get(f"/screening/basic/{created['session_id']}")
+    created = client.post("/api/screening/basic", json=VALID_PROFILE).json()
+    fetched = client.get(f"/api/screening/basic/{created['session_id']}")
     assert fetched.status_code == 200
     assert fetched.json()["profile"]["age"] == 45
 
 
 def test_unknown_session_returns_404():
-    resp = client.get("/screening/basic/does-not-exist")
+    resp = client.get("/api/screening/basic/does-not-exist")
     assert resp.status_code == 404
 
 
@@ -130,7 +135,7 @@ def test_unknown_session_returns_404():
 def test_out_of_range_values_are_rejected(field, bad_value):
     payload = dict(VALID_PROFILE)
     payload[field] = bad_value
-    resp = client.post("/screening/basic", json=payload)
+    resp = client.post("/api/screening/basic", json=payload)
     assert resp.status_code == 422
 
 
@@ -138,21 +143,21 @@ def test_diastolic_must_be_lower_than_systolic():
     payload = dict(VALID_PROFILE)
     payload["systolic_bp"] = 110
     payload["diastolic_bp"] = 120
-    resp = client.post("/screening/basic", json=payload)
+    resp = client.post("/api/screening/basic", json=payload)
     assert resp.status_code == 422
 
 
 def test_missing_required_field_rejected():
     payload = dict(VALID_PROFILE)
     del payload["biological_sex"]
-    resp = client.post("/screening/basic", json=payload)
+    resp = client.post("/api/screening/basic", json=payload)
     assert resp.status_code == 422
 
 
 def test_invalid_enum_value_rejected():
     payload = dict(VALID_PROFILE)
     payload["smoking_status"] = "sometimes"  # not a valid enum member
-    resp = client.post("/screening/basic", json=payload)
+    resp = client.post("/api/screening/basic", json=payload)
     assert resp.status_code == 422
 
 
@@ -160,38 +165,38 @@ def test_implausible_bmi_combo_rejected():
     payload = dict(VALID_PROFILE)
     payload["height_cm"] = 250
     payload["weight_kg"] = 395
-    resp = client.post("/screening/basic", json=payload)
+    resp = client.post("/api/screening/basic", json=payload)
     assert resp.status_code == 422
 
 
 def test_initial_screening_covers_all_diseases():
     session_id = _new_session()
-    resp = client.post("/screening/initial", json={"session_id": session_id})
+    resp = client.post("/api/screening/initial", json={"session_id": session_id})
     assert resp.status_code == 200
     keys = {r["disease_key"] for r in resp.json()["results"]}
     assert keys == {"diabetes", "heart", "kidney"}
 
 
 def test_initial_screening_unknown_session_404():
-    resp = client.post("/screening/initial", json={"session_id": "nope"})
+    resp = client.post("/api/screening/initial", json={"session_id": "nope"})
     assert resp.status_code == 404
 
 
 def test_get_followup_questions_for_diabetes():
-    resp = client.get("/screening/followup/diabetes")
+    resp = client.get("/api/screening/followup/diabetes")
     assert resp.status_code == 200
     ids = {q["id"] for q in resp.json()["questions"]}
     assert "fasting_glucose" in ids
 
 
 def test_get_followup_questions_unknown_disease_404():
-    resp = client.get("/screening/followup/liver")
+    resp = client.get("/api/screening/followup/liver")
     assert resp.status_code == 404
 
 
 def test_submit_followup_answers_updates_missing_list():
     session_id = _new_session()
-    resp = client.post("/screening/followup", json={
+    resp = client.post("/api/screening/followup", json={
         "session_id": session_id, "disease_key": "diabetes",
         "answers": {"fasting_glucose": 130},
     })
@@ -201,18 +206,18 @@ def test_submit_followup_answers_updates_missing_list():
 
 def test_prediction_insufficient_information_without_followup():
     session_id = _new_session()
-    resp = client.post("/prediction/diabetes", json={"session_id": session_id})
+    resp = client.post("/api/prediction/diabetes", json={"session_id": session_id})
     assert resp.status_code == 200
     assert resp.json()["status"] == "insufficient_information"
 
 
 def test_prediction_succeeds_after_followup():
     session_id = _new_session()
-    client.post("/screening/followup", json={
+    client.post("/api/screening/followup", json={
         "session_id": session_id, "disease_key": "diabetes",
         "answers": DIABETES_FOLLOWUP,
     })
-    resp = client.post("/prediction/diabetes", json={"session_id": session_id})
+    resp = client.post("/api/prediction/diabetes", json={"session_id": session_id})
     assert resp.status_code == 200
     body = resp.json()
     assert body["status"] == "predicted"
@@ -222,14 +227,14 @@ def test_prediction_succeeds_after_followup():
 
 def test_prediction_unknown_disease_404():
     session_id = _new_session()
-    resp = client.post("/prediction/liver", json={"session_id": session_id})
+    resp = client.post("/api/prediction/liver", json={"session_id": session_id})
     assert resp.status_code == 404
 
 
 def test_circuit_diagram_honest_501_without_qiskit():
     # This environment has no qiskit installed (see README) — the
     # endpoint must say so plainly rather than fabricate a diagram.
-    resp = client.get("/circuit/diabetes")
+    resp = client.get("/api/circuit/diabetes")
     assert resp.status_code in (200, 501)  # 200 if qiskit IS installed wherever this runs
     if resp.status_code == 501:
         assert "qiskit" in resp.json()["detail"].lower()
@@ -238,19 +243,19 @@ def test_circuit_diagram_honest_501_without_qiskit():
 
 
 def test_circuit_diagram_unknown_disease_404():
-    resp = client.get("/circuit/liver")
+    resp = client.get("/api/circuit/liver")
     assert resp.status_code == 404
 
 
 def test_report_reflects_predictions_made_so_far():
     session_id = _new_session()
-    client.post("/screening/followup", json={
+    client.post("/api/screening/followup", json={
         "session_id": session_id, "disease_key": "diabetes",
         "answers": DIABETES_FOLLOWUP,
     })
-    client.post("/prediction/diabetes", json={"session_id": session_id})
+    client.post("/api/prediction/diabetes", json={"session_id": session_id})
 
-    resp = client.get(f"/screening/report/{session_id}")
+    resp = client.get(f"/api/screening/report/{session_id}")
     assert resp.status_code == 200
     body = resp.json()
     by_key = {}

@@ -45,6 +45,9 @@ app = FastAPI(
         "Not a medical diagnostic tool."
     ),
     version="0.1.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json",
 )
 
 # Local dev origins for `npm run dev` (Vite on 5173) hitting a separately
@@ -65,7 +68,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(api_router)
+app.include_router(api_router, prefix="/api")
 
 _FRONTEND_DIST = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
 
@@ -79,7 +82,7 @@ else:
     def root():
         return {
             "message": "Quantum Multi-Disease Health Screening API",
-            "docs": "/docs",
+            "docs": "/api/docs",
             "note": "No built frontend found at frontend/dist — API only. Run `npm run build` in frontend/ to serve the UI from here too.",
             "disclaimer": (
                 "This system provides experimental health-risk estimates using "

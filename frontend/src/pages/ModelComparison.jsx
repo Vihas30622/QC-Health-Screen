@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { API_BASE, getModels, ApiError } from "../api";
+import { API_BASE, API_PREFIX, getModels, ApiError } from "../api";
 import "../styles/profile-page.css";
 import "../styles/model-comparison.css";
 
@@ -61,13 +61,13 @@ export default function ModelComparison({ onBack }) {
                     <img
                       className="chart-thumb"
                       alt={`${modelName} confusion matrix`}
-                      src={`${API_BASE}/models/${diseaseKey}/charts/confusion_${modelName}.png`}
+                      src={`${API_BASE}${API_PREFIX}/models/${diseaseKey}/charts/confusion_${modelName}.png`}
                       onError={(e) => { e.target.style.display = "none"; }}
                     />
                     <img
                       className="chart-thumb"
                       alt={`${modelName} ROC curve`}
-                      src={`${API_BASE}/models/${diseaseKey}/charts/roc_${modelName}.png`}
+                      src={`${API_BASE}${API_PREFIX}/models/${diseaseKey}/charts/roc_${modelName}.png`}
                       onError={(e) => { e.target.style.display = "none"; }}
                     />
                   </div>
@@ -77,7 +77,7 @@ export default function ModelComparison({ onBack }) {
               <img
                 className="chart-full"
                 alt={`${disease.display_name} model comparison`}
-                src={`${API_BASE}/models/${diseaseKey}/charts/model_comparison.png`}
+                src={`${API_BASE}${API_PREFIX}/models/${diseaseKey}/charts/model_comparison.png`}
                 onError={(e) => { e.target.style.display = "none"; }}
               />
 
